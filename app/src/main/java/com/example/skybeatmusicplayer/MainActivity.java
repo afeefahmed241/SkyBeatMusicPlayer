@@ -19,6 +19,9 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
 import android.provider.MediaStore;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.karumi.dexter.Dexter;
@@ -42,6 +45,9 @@ public class MainActivity extends AppCompatActivity {
 
     ArrayList<Audio> audioList;
 
+
+    Button btnPause,btnResume;
+
     //linked to StorageUtil
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.example.skybeatmusicplayer.PlayNewAudio";
 
@@ -51,11 +57,17 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+       // getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
         //taking the user permission
         CheckUserPermsions();
 
 
+
         loadAudio();
+
+        btnPause = findViewById(R.id.btnPause);
+        btnResume = findViewById(R.id.btnResume);
 
        // some how local audio file is not loading
         // have to work with that
@@ -65,6 +77,23 @@ public class MainActivity extends AppCompatActivity {
       // Toast.makeText(MainActivity.this, audioList.get(0).getTitle(), Toast.LENGTH_SHORT).show();
 
            playAudio(1);
+
+
+           btnPause.setOnClickListener(new View.OnClickListener() {
+               @Override
+               public void onClick(View v) {
+
+                   player.pauseMedia();
+               }
+           });
+
+           btnResume.setOnClickListener(new View.OnClickListener() {
+               @Override
+               public void onClick(View v) {
+                   player.resumeMedia();
+
+               }
+           });
 
 
         //testing online stream music works or not //works
