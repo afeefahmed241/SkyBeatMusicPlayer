@@ -3,6 +3,8 @@ package com.example.skybeatmusicplayer;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.content.ComponentName;
@@ -21,7 +23,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
-public class HomeActivity extends AppCompatActivity {
+public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemClicked{
 
     // instance of the service
     private MediaPlayerService player;
@@ -35,20 +37,40 @@ public class HomeActivity extends AppCompatActivity {
     //linked to StorageUtil
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.example.skybeatmusicplayer.PlayNewAudio";
 
+
+
+    RecyclerView recyclerView;
+    RecyclerView.Adapter myAdapter;
+    RecyclerView.LayoutManager layoutManager;
+
     @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
+
+        recyclerView = findViewById(R.id.listSongs);
+        recyclerView.setHasFixedSize(true);
+
+        layoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(layoutManager);
+
         //taking the user permission
         CheckUserPermsions();
-
-
-
+        //loading the audio from the device
         loadAudio();
 
-        playAudio(1);
+        //setting up the adapter
+        myAdapter = new SongAdapter(this,audioList);
+        recyclerView.setAdapter(myAdapter);
+
+        myAdapter.notifyDataSetChanged();
+
+
+
+
+       // playAudio(1);
 
     }
 
@@ -184,5 +206,10 @@ public class HomeActivity extends AppCompatActivity {
             default:
                 super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
+    }
+
+    @Override
+    public void onItemClicked(int index) {
+        playAudio(index);
     }
 }
