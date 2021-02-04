@@ -17,11 +17,16 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.karumi.dexter.Dexter;
@@ -36,17 +41,16 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
-    // instance of the service
-    private MediaPlayerService player;
-    // status of the service
-    boolean serviceBound = false;
-
-    //array list of audio files;
-
-    ArrayList<Audio> audioList;
 
 
-    Button btnPause,btnResume;
+    //animation variables;
+    Animation topAnim,bottomAnim;
+    ImageView imgBoombox;
+    TextView tvMusic;
+
+    private static  int SPLASH_SCREEN = 3000;
+
+
 
     //linked to StorageUtil
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.example.skybeatmusicplayer.PlayNewAudio";
@@ -60,14 +64,33 @@ public class MainActivity extends AppCompatActivity {
        // getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         //taking the user permission
-        CheckUserPermsions();
+       // CheckUserPermsions();
 
 
 
-        loadAudio();
+       // loadAudio();
 
-        btnPause = findViewById(R.id.btnPause);
-        btnResume = findViewById(R.id.btnResume);
+        //hooking the animation files
+        topAnim = AnimationUtils.loadAnimation(this,R.anim.top_animation);
+        bottomAnim = AnimationUtils.loadAnimation(this,R.anim.bottom_animation);
+
+        imgBoombox = findViewById(R.id.imgBoombox);
+        tvMusic = findViewById(R.id.tvMusic);
+
+        imgBoombox.setAnimation(topAnim);
+        tvMusic.setAnimation(bottomAnim);
+
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Intent intent = new Intent(MainActivity.this,HomeActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        },SPLASH_SCREEN);
+
+
 
        // some how local audio file is not loading
         // have to work with that
@@ -76,24 +99,10 @@ public class MainActivity extends AppCompatActivity {
 
       // Toast.makeText(MainActivity.this, audioList.get(0).getTitle(), Toast.LENGTH_SHORT).show();
 
-           playAudio(1);
+        //   playAudio(1);
 
 
-           btnPause.setOnClickListener(new View.OnClickListener() {
-               @Override
-               public void onClick(View v) {
 
-                   player.pauseMedia();
-               }
-           });
-
-           btnResume.setOnClickListener(new View.OnClickListener() {
-               @Override
-               public void onClick(View v) {
-                   player.resumeMedia();
-
-               }
-           });
 
 
         //testing online stream music works or not //works
@@ -109,146 +118,5 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-
-
-
-    //Binding this Client to the AudioPlayer Service
-    private ServiceConnection serviceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            // We've bound to LocalService, cast the IBinder and get LocalService instance
-            MediaPlayerService.LocalBinder binder = (MediaPlayerService.LocalBinder) service;
-            player = binder.getService();
-            serviceBound = true;
-
-            Toast.makeText(MainActivity.this, "Service Bound", Toast.LENGTH_SHORT).show();
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            serviceBound = false;
-        }
-    };
-    private void playAudio(int audioIndex) {
-        //Check is service is active
-        if (!serviceBound) {
-            //Store Serializable audioList to SharedPreferences
-            StorageUtil storage = new StorageUtil(getApplicationContext());
-            storage.storeAudio(audioList);
-            storage.storeAudioIndex(audioIndex);
-
-            Intent playerIntent = new Intent(this, MediaPlayerService.class);
-            startService(playerIntent);
-            bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE);
-        } else {
-            //Store the new audioIndex to SharedPreferences
-            StorageUtil storage = new StorageUtil(getApplicationContext());
-            storage.storeAudioIndex(audioIndex);
-
-            //Service is active
-            //Send a broadcast to the service -> PLAY_NEW_AUDIO
-            Intent broadcastIntent = new Intent(Broadcast_PLAY_NEW_AUDIO);
-            sendBroadcast(broadcastIntent);
-        }
-    }
-
-
-    @Override
-    public void onSaveInstanceState(Bundle savedInstanceState) {
-        savedInstanceState.putBoolean("ServiceState", serviceBound);
-        super.onSaveInstanceState(savedInstanceState);
-    }
-
-    @Override
-    public void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        serviceBound = savedInstanceState.getBoolean("ServiceState");
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (serviceBound) {
-            unbindService(serviceConnection);
-            //service is active
-            player.stopSelf();
-        }
-    }
-
-    /**
-     * using content Resolver to get the audio files of local device
-     * this function will load the audio data in to audioList instance
-     */
-
-    @RequiresApi(api = Build.VERSION_CODES.R)
-    private void loadAudio() {
-        ContentResolver contentResolver = getContentResolver();
-
-        Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-
-        String selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0";
-        String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
-        Cursor cursor = getApplicationContext().getContentResolver().query(uri, null, selection, null, sortOrder);
-
-        if (cursor != null && cursor.getCount() > 0) {
-            audioList = new ArrayList<>();
-            while (cursor.moveToNext()) {
-                String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
-                String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
-                String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
-                String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
-
-                // Save to audioList
-                audioList.add(new Audio(data, title, album, artist));
-            }
-        }
-        assert cursor != null;
-        cursor.close();
-    }
-
-    /**
-     * File can not be read unless you have permission from the user
-     * this is form taking the permission from the user
-     */
-
-    void CheckUserPermsions() {
-        if (Build.VERSION.SDK_INT >= 23) {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) !=
-                    PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{
-                                Manifest.permission.READ_EXTERNAL_STORAGE},
-                        REQUEST_CODE_ASK_PERMISSIONS);
-                return;
-            }
-        }
-
-
-    }
-
-    //get acces to location permsion
-    final private int REQUEST_CODE_ASK_PERMISSIONS = 123;
-
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_CODE_ASK_PERMISSIONS:
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                } else {
-                    // Permission Denied
-                    Toast.makeText(this, "permission Denial", Toast.LENGTH_SHORT)
-                            .show();
-                }
-                break;
-            default:
-                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        }
-    }
-
-
-
-
-
 
 }

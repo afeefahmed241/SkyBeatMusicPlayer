@@ -4,25 +4,28 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#fece2f"
     tools:context=".MainActivity">
 
-    <Button
-        android:id="@+id/btnResume"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Resume"
-        app:layout_constraintBottom_toBottomOf="parent"
+    <ImageView
+        android:id="@+id/imgBoombox"
+        android:layout_width="0dp"
+        android:layout_height="350dp"
+        android:layout_marginTop="75dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnPause" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/boombox" />
 
-    <Button
-        android:id="@+id/btnPause"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Pause"
-        app:layout_constraintBottom_toTopOf="@+id/btnResume"
+    <TextView
+        android:id="@+id/tvMusic"
+        android:layout_width="292dp"
+        android:layout_height="127dp"
+        android:fontFamily="@font/bangers"
+        android:text="Play Music"
+        android:textAlignment="center"
+        android:textSize="70sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/imgBoombox" />
 </androidx.constraintlayout.widget.ConstraintLayout>
