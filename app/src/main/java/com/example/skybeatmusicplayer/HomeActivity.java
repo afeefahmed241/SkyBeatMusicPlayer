@@ -32,7 +32,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
 
     //array list of audio files;
 
-    ArrayList<Audio> audioList;
+    //ArrayList<Audio> audioList;
 
     //linked to StorageUtil
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.example.skybeatmusicplayer.PlayNewAudio";
@@ -62,7 +62,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
         loadAudio();
 
         //setting up the adapter
-        myAdapter = new SongAdapter(this,audioList);
+        myAdapter = new SongAdapter(this,ApplicationClass.audioList);
         recyclerView.setAdapter(myAdapter);
 
         myAdapter.notifyDataSetChanged();
@@ -73,6 +73,8 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
        // playAudio(1);
 
     }
+
+
 
     //Binding this Client to the AudioPlayer Service
     private ServiceConnection serviceConnection = new ServiceConnection() {
@@ -96,7 +98,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
         if (!serviceBound) {
             //Store Serializable audioList to SharedPreferences
             StorageUtil storage = new StorageUtil(getApplicationContext());
-            storage.storeAudio(audioList);
+            storage.storeAudio(ApplicationClass.audioList);
             storage.storeAudioIndex(audioIndex);
 
             Intent playerIntent = new Intent(this, MediaPlayerService.class);
@@ -153,7 +155,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
         Cursor cursor = getApplicationContext().getContentResolver().query(uri, null, selection, null, sortOrder);
 
         if (cursor != null && cursor.getCount() > 0) {
-            audioList = new ArrayList<>();
+            //audioList = new ArrayList<>();
             while (cursor.moveToNext()) {
                 String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
                 String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
@@ -161,7 +163,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
                 String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
 
                 // Save to audioList
-                audioList.add(new Audio(data, title, album, artist));
+                ApplicationClass.audioList.add(new Audio(data, title, album, artist));
             }
         }
         assert cursor != null;
@@ -199,7 +201,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
 
                 } else {
                     // Permission Denied
-                    Toast.makeText(this, "permission Denial", Toast.LENGTH_SHORT)
+                    Toast.makeText(this, "Permission Denial", Toast.LENGTH_SHORT)
                             .show();
                 }
                 break;
@@ -210,6 +212,10 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
 
     @Override
     public void onItemClicked(int index) {
+
+        Intent intent = new Intent(HomeActivity.this,MusicActivity.class);
+        intent.putExtra("Audio_index",index);
+        startActivity(intent);
         playAudio(index);
     }
 }

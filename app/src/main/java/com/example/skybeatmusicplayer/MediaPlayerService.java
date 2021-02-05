@@ -180,6 +180,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         //unregister BroadcastReceivers
         unregisterReceiver(becomingNoisyReceiver);
         unregisterReceiver(playNewAudio);
+        unregisterReceiver(pauseMusic);
 
         //clear cached playlist
         new StorageUtil(getApplicationContext()).clearCachedAudioPlaylist();
@@ -455,6 +456,24 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         registerReceiver(playNewAudio, filter);
     }
 
+
+    //pause Broadcast Receiver
+    private BroadcastReceiver pauseMusic = new BroadcastReceiver()
+    {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            //pause the Music
+            pauseMedia();
+        }
+    };
+    //register the pause broadcast Receiver
+
+    private void register_pauseMusic(){
+        IntentFilter filter = new IntentFilter(MusicActivity.Broadcast_PAUSE_MUSIC);
+        registerReceiver(pauseMusic, filter);
+    }
+
     /**
      * Registering All the broadcast receivers
      */
@@ -472,6 +491,9 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         registerBecomingNoisyReceiver();
         //Listen for new Audio to play -- BroadcastReceiver
         register_playNewAudio();
+
+        //pausing music
+        register_pauseMusic();
     }
 
 
