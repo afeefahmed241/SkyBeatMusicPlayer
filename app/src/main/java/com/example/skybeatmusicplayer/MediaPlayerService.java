@@ -14,6 +14,7 @@ import android.media.MediaPlayer;
 import android.media.session.MediaSessionManager;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.telephony.PhoneStateListener;
@@ -27,15 +28,15 @@ import androidx.core.app.NotificationCompat;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class MediaPlayerService extends Service implements MediaPlayer.OnCompletionListener,
-        MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnSeekCompleteListener,
+public class MediaPlayerService extends Service implements MediaPlayer.OnCompletionListener,MediaPlayer.OnPreparedListener,
+         MediaPlayer.OnErrorListener, MediaPlayer.OnSeekCompleteListener,
         MediaPlayer.OnInfoListener, MediaPlayer.OnBufferingUpdateListener, AudioManager.OnAudioFocusChangeListener
 {
     //Binder Given to clients
     private final IBinder iBinder = new LocalBinder();
 
     //MediaPlayer obj to use it for media playback
-    private MediaPlayer mediaPlayer;
+    public MediaPlayer mediaPlayer;
     //for storing the path of the audio file
     private String mediaFile;
     //for pause/resume MediaPlayer;
@@ -250,11 +251,15 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
      * @param mp
      */
     @Override
-    public void onPrepared(MediaPlayer mp) {
+  public void onPrepared(MediaPlayer mp) {
         //Invoked when the media source is ready for playback.
+        //playMedia();
+        HomeActivity.seekBar.setMax(mediaPlayer.getDuration());
         playMedia();
+       HomeActivity.changeSeekbar();
 
-    }
+   }
+
 
     /**
      * Invoked indicating the completion of a seek operation.
@@ -263,6 +268,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     @Override
     public void onSeekComplete(MediaPlayer mp) {
 
+        resumePosition = mediaPlayer.getCurrentPosition();
     }
 
     /**
@@ -303,7 +309,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     /**
      * for playing the audio
      */
-    private void playMedia() {
+    public void playMedia() {
         if (!mediaPlayer.isPlaying()) {
             mediaPlayer.start();
         }
@@ -313,7 +319,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     /**
      * for stop playing the Media
      */
-    private void stopMedia() {
+    public void stopMedia() {
         if (mediaPlayer == null) return;
         if (mediaPlayer.isPlaying()) {
             mediaPlayer.stop();
@@ -337,6 +343,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         if (!mediaPlayer.isPlaying()) {
             mediaPlayer.seekTo(resumePosition);
             mediaPlayer.start();
+
+            HomeActivity.changeSeekbar();
         }
     }
 
@@ -452,7 +460,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
      */
     private void register_playNewAudio() {
         //Register playNewMedia receiver
-        IntentFilter filter = new IntentFilter(MainActivity.Broadcast_PLAY_NEW_AUDIO);
+        IntentFilter filter = new IntentFilter(HomeActivity.Broadcast_PLAY_NEW_AUDIO);
         registerReceiver(playNewAudio, filter);
     }
 
@@ -470,7 +478,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     //register the pause broadcast Receiver
 
     private void register_pauseMusic(){
-        IntentFilter filter = new IntentFilter(MusicActivity.Broadcast_PAUSE_MUSIC);
+        IntentFilter filter = new IntentFilter(HomeActivity.Broadcast_PAUSE_MUSIC);
         registerReceiver(pauseMusic, filter);
     }
 

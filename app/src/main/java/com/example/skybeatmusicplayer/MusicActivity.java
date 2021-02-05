@@ -2,7 +2,6 @@ package com.example.skybeatmusicplayer;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -40,9 +39,9 @@ public class MusicActivity extends AppCompatActivity {
         Intent intent = getIntent();
         int index = intent.getIntExtra("Audio_index",0);
 
-        tvMusicTitle = findViewById(R.id.tvMusicTitle);
-        tvMusicArtist = findViewById(R.id.tvMusicArtist);
-        imgPausePlay = findViewById(R.id.imgPlayPause);
+        tvMusicTitle = findViewById(R.id.tvMusicTit);
+        tvMusicArtist = findViewById(R.id.tvMusicArt);
+        imgPausePlay = findViewById(R.id.imgPlayPaus);
 
         tvMusicTitle.setText(ApplicationClass.audioList.get(index).getTitle());
 

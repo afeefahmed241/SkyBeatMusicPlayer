@@ -3,6 +3,8 @@ package com.example.skybeatmusicplayer;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -14,28 +16,36 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.provider.MediaStore;
+import android.view.KeyEvent;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 
-public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemClicked{
+public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemClicked, View.OnClickListener {
 
     // instance of the service
-    private MediaPlayerService player;
+    private static MediaPlayerService player;
     // status of the service
     boolean serviceBound = false;
 
     //array list of audio files;
 
-    //ArrayList<Audio> audioList;
+    ArrayList<Audio> audioList;
 
     //linked to StorageUtil
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.example.skybeatmusicplayer.PlayNewAudio";
+    public static final String Broadcast_PAUSE_MUSIC = "com.example.skybeatmusicplayer.PauseMusic";
 
 
 
@@ -43,12 +53,45 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
     RecyclerView.Adapter myAdapter;
     RecyclerView.LayoutManager layoutManager;
 
+    //adding Fragments
+    Fragment listFrag,MusicFrag;
+    FragmentManager fragmentManager;
+
+    //
+    TextView tvMusicTitle,tvMusicArtist;
+    ImageView imgPausePlay,imgSkipNext,imgSkipPrevious;
+    public static SeekBar seekBar;
+
+    public static Runnable runnable;
+    public static Handler handler;
+
+    // for the back button
+    private int clickCount = 0;
+
     @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
+        fragmentManager = getSupportFragmentManager();
+
+        listFrag = fragmentManager.findFragmentById(R.id.ListFrag);
+        MusicFrag = fragmentManager.findFragmentById(R.id.MusicFrag);
+
+        tvMusicTitle = findViewById(R.id.tvMusicTit);
+        tvMusicArtist = findViewById(R.id.tvMusicArt);
+        imgPausePlay = findViewById(R.id.imgPlayPaus);
+        imgSkipNext = findViewById(R.id.imgSkipNxt);
+        imgSkipPrevious = findViewById(R.id.imgSkipPrevus);
+        imgPausePlay.setImageResource(R.drawable.ic_pause);
+        seekBar = findViewById(R.id.seekBar);
+
+
+        fragmentManager.beginTransaction()
+                .show(listFrag)
+                .hide(MusicFrag)
+                .commit();
 
         recyclerView = findViewById(R.id.listSongs);
         recyclerView.setHasFixedSize(true);
@@ -62,10 +105,37 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
         loadAudio();
 
         //setting up the adapter
-        myAdapter = new SongAdapter(this,ApplicationClass.audioList);
+        myAdapter = new SongAdapter(this,audioList);
         recyclerView.setAdapter(myAdapter);
 
         myAdapter.notifyDataSetChanged();
+
+        imgPausePlay.setOnClickListener(this);
+        imgSkipNext.setOnClickListener(this);
+        imgSkipPrevious.setOnClickListener(this);
+
+        handler = new Handler();
+
+
+
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if(fromUser){
+                    player.mediaPlayer.seekTo(progress);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
 
 
 
@@ -74,6 +144,24 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
 
     }
 
+
+    public static void changeSeekbar(){
+
+            seekBar.setProgress(player.mediaPlayer.getCurrentPosition());
+
+
+       if(player.mediaPlayer.isPlaying())
+        {
+           runnable = new Runnable() {
+               @Override
+                public void run() {
+                  changeSeekbar();
+                }
+            };
+            handler.postDelayed(runnable,50);
+        }
+
+    }
 
 
     //Binding this Client to the AudioPlayer Service
@@ -98,7 +186,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
         if (!serviceBound) {
             //Store Serializable audioList to SharedPreferences
             StorageUtil storage = new StorageUtil(getApplicationContext());
-            storage.storeAudio(ApplicationClass.audioList);
+            storage.storeAudio(audioList);
             storage.storeAudioIndex(audioIndex);
 
             Intent playerIntent = new Intent(this, MediaPlayerService.class);
@@ -155,7 +243,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
         Cursor cursor = getApplicationContext().getContentResolver().query(uri, null, selection, null, sortOrder);
 
         if (cursor != null && cursor.getCount() > 0) {
-            //audioList = new ArrayList<>();
+            audioList = new ArrayList<>();
             while (cursor.moveToNext()) {
                 String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
                 String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
@@ -163,7 +251,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
                 String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
 
                 // Save to audioList
-                ApplicationClass.audioList.add(new Audio(data, title, album, artist));
+                audioList.add(new Audio(data, title, album, artist));
             }
         }
         assert cursor != null;
@@ -210,12 +298,69 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
         }
     }
 
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+
+        if(keyCode == KeyEvent.KEYCODE_BACK && clickCount==1){
+            fragmentManager.beginTransaction()
+                    .show(listFrag)
+                    .hide(MusicFrag)
+                    .commit();
+            clickCount--;
+            return true;
+        }
+
+        return super.onKeyDown(keyCode, event);
+    }
+
     @Override
     public void onItemClicked(int index) {
 
-        Intent intent = new Intent(HomeActivity.this,MusicActivity.class);
-        intent.putExtra("Audio_index",index);
-        startActivity(intent);
-        playAudio(index);
+        tvMusicTitle.setText(audioList.get(index).getTitle());
+
+
+
+        if(audioList.get(index).getArtist().equals("<unknown>"))
+        {
+            tvMusicArtist.setText("Unknown Artist");
+        }
+        else
+        {
+            tvMusicArtist.setText(audioList.get(index).getArtist());
+        }
+
+        fragmentManager.beginTransaction()
+                .hide(listFrag)
+                .show(MusicFrag)
+                .commit();
+
+        clickCount++;
+       // Intent intent = new Intent(HomeActivity.this,MusicActivity.class);
+       // intent.putExtra("Audio_index",index);
+     //   startActivity(intent);
+       playAudio(index);
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.imgPlayPaus:
+                if(player.mediaPlayer.isPlaying()){
+                    player.pauseMedia();
+                    imgPausePlay.setImageResource(R.drawable.ic_play);
+                }
+                else
+                {
+                    player.resumeMedia();
+                    imgPausePlay.setImageResource(R.drawable.ic_pause);
+                }
+                break;
+            case R.id.imgSkipNxt:
+            case R.id.imgSkipPrevus:
+                break;
+
+
+        }
     }
 }
