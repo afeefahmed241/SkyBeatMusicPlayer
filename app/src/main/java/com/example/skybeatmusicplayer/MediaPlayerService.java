@@ -28,7 +28,7 @@ import androidx.core.app.NotificationCompat;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class MediaPlayerService extends Service implements MediaPlayer.OnCompletionListener,MediaPlayer.OnPreparedListener,
+public class MediaPlayerService extends Service implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener,
          MediaPlayer.OnErrorListener, MediaPlayer.OnSeekCompleteListener,
         MediaPlayer.OnInfoListener, MediaPlayer.OnBufferingUpdateListener, AudioManager.OnAudioFocusChangeListener
 {
@@ -197,6 +197,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     public void onBufferingUpdate(MediaPlayer mp, int percent) {
 
     }
+    
+
 
     /**
      * Invoked when playback of a media source has completed
@@ -208,6 +210,10 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         stopMedia();
         //stop the service
         stopSelf();
+
+        Intent broadcastIntent = new Intent(HomeActivity.Broadcast_PLAY_NEXT_MUSIC);
+        sendBroadcast(broadcastIntent);
+
     }
 
     /**

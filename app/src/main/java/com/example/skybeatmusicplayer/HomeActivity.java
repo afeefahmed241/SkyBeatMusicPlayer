@@ -9,10 +9,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -46,7 +48,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
     //linked to StorageUtil
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.example.skybeatmusicplayer.PlayNewAudio";
     public static final String Broadcast_PAUSE_MUSIC = "com.example.skybeatmusicplayer.PauseMusic";
-
+    public static final String Broadcast_PLAY_NEXT_MUSIC = "com.example.skybeatmusicplayer.PlayNextMusic";
 
 
     RecyclerView recyclerView;
@@ -54,12 +56,12 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
     RecyclerView.LayoutManager layoutManager;
 
     //adding Fragments
-    Fragment listFrag,MusicFrag;
+    Fragment listFrag, MusicFrag;
     FragmentManager fragmentManager;
 
     //
-    TextView tvMusicTitle,tvMusicArtist;
-    ImageView imgPausePlay,imgSkipNext,imgSkipPrevious;
+    TextView tvMusicTitle, tvMusicArtist;
+    ImageView imgPausePlay, imgSkipNext, imgSkipPrevious;
     public static SeekBar seekBar;
 
     public static Runnable runnable;
@@ -108,7 +110,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
         loadAudio();
 
         //setting up the adapter
-        myAdapter = new SongAdapter(this,audioList);
+        myAdapter = new SongAdapter(this, audioList);
         recyclerView.setAdapter(myAdapter);
 
         myAdapter.notifyDataSetChanged();
@@ -120,11 +122,10 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
         handler = new Handler();
 
 
-
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if(fromUser){
+                if (fromUser) {
                     player.mediaPlayer.seekTo(progress);
                 }
             }
@@ -140,32 +141,26 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
             }
         });
 
+        register_playNextMusic();
 
-
-
-
-
-       // playAudio(1);
+        // playAudio(1);
 
     }
 
 
+    public static void changeSeekbar() {
+
+        seekBar.setProgress(player.mediaPlayer.getCurrentPosition());
 
 
-    public static void changeSeekbar(){
-
-            seekBar.setProgress(player.mediaPlayer.getCurrentPosition());
-
-
-       if(player.mediaPlayer.isPlaying())
-        {
-           runnable = new Runnable() {
-               @Override
+        if (player.mediaPlayer.isPlaying()) {
+            runnable = new Runnable() {
+                @Override
                 public void run() {
-                  changeSeekbar();
+                    changeSeekbar();
                 }
             };
-            handler.postDelayed(runnable,50);
+            handler.postDelayed(runnable, 50);
         }
 
     }
@@ -188,6 +183,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
             serviceBound = false;
         }
     };
+
     private void playAudio(int audioIndex) {
         //Check is service is active
         if (!serviceBound) {
@@ -232,6 +228,8 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
             //service is active
             player.stopSelf();
         }
+
+        unregisterReceiver(playNextMusic);
     }
 
     /**
@@ -309,7 +307,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
 
-        if(keyCode == KeyEvent.KEYCODE_BACK && clickCount==1){
+        if (keyCode == KeyEvent.KEYCODE_BACK && clickCount == 1) {
             fragmentManager.beginTransaction()
                     .show(listFrag)
                     .hide(MusicFrag)
@@ -327,13 +325,9 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
         tvMusicTitle.setText(audioList.get(index).getTitle());
 
 
-
-        if(audioList.get(index).getArtist().equals("<unknown>"))
-        {
+        if (audioList.get(index).getArtist().equals("<unknown>")) {
             tvMusicArtist.setText("Unknown Artist");
-        }
-        else
-        {
+        } else {
             tvMusicArtist.setText(audioList.get(index).getArtist());
         }
 
@@ -343,12 +337,11 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
                 .commit();
 
         clickCount++;
-       // Intent intent = new Intent(HomeActivity.this,MusicActivity.class);
-       // intent.putExtra("Audio_index",index);
-     //   startActivity(intent);
+        // Intent intent = new Intent(HomeActivity.this,MusicActivity.class);
+        // intent.putExtra("Audio_index",index);
+        //   startActivity(intent);
 
-        if(currentSong != index)
-        {
+        if (currentSong != index) {
             playAudio(index);
             currentSong = index;
         }
@@ -358,63 +351,47 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
 
     @Override
     public void onClick(View v) {
-        switch (v.getId()){
+        switch (v.getId()) {
             case R.id.imgPlayPaus:
-                if(player.mediaPlayer.isPlaying()){
+                if (player.mediaPlayer.isPlaying()) {
                     player.pauseMedia();
                     imgPausePlay.setImageResource(R.drawable.ic_play);
-                }
-                else
-                {
+                } else {
                     player.resumeMedia();
                     imgPausePlay.setImageResource(R.drawable.ic_pause);
                 }
                 break;
             case R.id.imgSkipNxt:
                 currentSong++;
-                if(currentSong==audioList.size())
-                {
+                if (currentSong == audioList.size()) {
                     playAudio(0);
                     currentSong = 0;
-                }
-                else
-                {
+                } else {
                     playAudio(currentSong);
                 }
                 tvMusicTitle.setText(audioList.get(currentSong).getTitle());
 
 
-
-                if(audioList.get(currentSong).getArtist().equals("<unknown>"))
-                {
+                if (audioList.get(currentSong).getArtist().equals("<unknown>")) {
                     tvMusicArtist.setText("Unknown Artist");
-                }
-                else
-                {
+                } else {
                     tvMusicArtist.setText(audioList.get(currentSong).getArtist());
                 }
                 break;
             case R.id.imgSkipPrevus:
                 currentSong--;
-                if(currentSong==-1)
-                {
-                    playAudio(audioList.size()-1);
-                    currentSong = audioList.size()-1;
-                }
-                else
-                {
+                if (currentSong == -1) {
+                    playAudio(audioList.size() - 1);
+                    currentSong = audioList.size() - 1;
+                } else {
                     playAudio(currentSong);
                 }
                 tvMusicTitle.setText(audioList.get(currentSong).getTitle());
 
 
-
-                if(audioList.get(currentSong).getArtist().equals("<unknown>"))
-                {
+                if (audioList.get(currentSong).getArtist().equals("<unknown>")) {
                     tvMusicArtist.setText("Unknown Artist");
-                }
-                else
-                {
+                } else {
                     tvMusicArtist.setText(audioList.get(currentSong).getArtist());
                 }
 
@@ -423,4 +400,36 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
 
         }
     }
+
+    private BroadcastReceiver playNextMusic = new BroadcastReceiver()
+    {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            //play the next Music
+            currentSong++;
+            if (currentSong == audioList.size()) {
+                playAudio(0);
+                currentSong = 0;
+            } else {
+                playAudio(currentSong);
+            }
+            tvMusicTitle.setText(audioList.get(currentSong).getTitle());
+
+
+            if (audioList.get(currentSong).getArtist().equals("<unknown>")) {
+                tvMusicArtist.setText("Unknown Artist");
+            } else {
+                tvMusicArtist.setText(audioList.get(currentSong).getArtist());
+            }
+        }
+    };
+    //register the next Music broadcast Receiver
+
+    private void register_playNextMusic(){
+        IntentFilter filter = new IntentFilter(Broadcast_PLAY_NEXT_MUSIC);
+        registerReceiver(playNextMusic, filter);
+    }
 }
+
+
