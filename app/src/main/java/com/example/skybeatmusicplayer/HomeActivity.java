@@ -68,6 +68,9 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
     // for the back button
     private int clickCount = 0;
 
+    //
+    public static int currentSong = -1;
+
     @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -140,9 +143,13 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
 
 
 
+
+
        // playAudio(1);
 
     }
+
+
 
 
     public static void changeSeekbar(){
@@ -339,7 +346,14 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
        // Intent intent = new Intent(HomeActivity.this,MusicActivity.class);
        // intent.putExtra("Audio_index",index);
      //   startActivity(intent);
-       playAudio(index);
+
+        if(currentSong != index)
+        {
+            playAudio(index);
+            currentSong = index;
+        }
+
+
     }
 
     @Override
@@ -357,7 +371,53 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
                 }
                 break;
             case R.id.imgSkipNxt:
+                currentSong++;
+                if(currentSong==audioList.size())
+                {
+                    playAudio(0);
+                    currentSong = 0;
+                }
+                else
+                {
+                    playAudio(currentSong);
+                }
+                tvMusicTitle.setText(audioList.get(currentSong).getTitle());
+
+
+
+                if(audioList.get(currentSong).getArtist().equals("<unknown>"))
+                {
+                    tvMusicArtist.setText("Unknown Artist");
+                }
+                else
+                {
+                    tvMusicArtist.setText(audioList.get(currentSong).getArtist());
+                }
+                break;
             case R.id.imgSkipPrevus:
+                currentSong--;
+                if(currentSong==-1)
+                {
+                    playAudio(audioList.size()-1);
+                    currentSong = audioList.size()-1;
+                }
+                else
+                {
+                    playAudio(currentSong);
+                }
+                tvMusicTitle.setText(audioList.get(currentSong).getTitle());
+
+
+
+                if(audioList.get(currentSong).getArtist().equals("<unknown>"))
+                {
+                    tvMusicArtist.setText("Unknown Artist");
+                }
+                else
+                {
+                    tvMusicArtist.setText(audioList.get(currentSong).getArtist());
+                }
+
                 break;
 
 
