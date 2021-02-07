@@ -107,13 +107,13 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
         //taking the user permission
         CheckUserPermsions();
         //loading the audio from the device
-        loadAudio();
+       // loadAudio();
 
         //setting up the adapter
-        myAdapter = new SongAdapter(this, audioList);
-        recyclerView.setAdapter(myAdapter);
+       // myAdapter = new SongAdapter(this, audioList);
+       // recyclerView.setAdapter(myAdapter);
 
-        myAdapter.notifyDataSetChanged();
+       // myAdapter.notifyDataSetChanged();
 
         imgPausePlay.setOnClickListener(this);
         imgSkipNext.setOnClickListener(this);
@@ -268,6 +268,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
      * this is form taking the permission from the user
      */
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
     void CheckUserPermsions() {
         if (Build.VERSION.SDK_INT >= 23) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) !=
@@ -276,6 +277,16 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
                                 Manifest.permission.READ_EXTERNAL_STORAGE},
                         REQUEST_CODE_ASK_PERMISSIONS);
                 return;
+            }
+            else
+            {
+                loadAudio();
+
+                //setting up the adapter
+                myAdapter = new SongAdapter(this, audioList);
+                recyclerView.setAdapter(myAdapter);
+
+                myAdapter.notifyDataSetChanged();
             }
         }
 
@@ -286,16 +297,25 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
     final private int REQUEST_CODE_ASK_PERMISSIONS = 123;
 
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         switch (requestCode) {
             case REQUEST_CODE_ASK_PERMISSIONS:
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    loadAudio();
+
+                    //setting up the adapter
+                    myAdapter = new SongAdapter(this, audioList);
+                    recyclerView.setAdapter(myAdapter);
+
+                    myAdapter.notifyDataSetChanged();
 
                 } else {
                     // Permission Denied
                     Toast.makeText(this, "Permission Denial", Toast.LENGTH_SHORT)
                             .show();
+                    CheckUserPermsions();
                 }
                 break;
             default:
