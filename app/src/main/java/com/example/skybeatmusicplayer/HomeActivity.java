@@ -61,7 +61,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
 
     //
     TextView tvMusicTitle, tvMusicArtist;
-    ImageView imgPausePlay, imgSkipNext, imgSkipPrevious;
+    public static ImageView imgPausePlay, imgSkipNext, imgSkipPrevious;
     public static SeekBar seekBar;
 
     public static Runnable runnable;
@@ -355,10 +355,10 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
             case R.id.imgPlayPaus:
                 if (player.mediaPlayer.isPlaying()) {
                     player.pauseMedia();
-                    imgPausePlay.setImageResource(R.drawable.ic_play);
+                  //  imgPausePlay.setImageResource(R.drawable.ic_play);
                 } else {
                     player.resumeMedia();
-                    imgPausePlay.setImageResource(R.drawable.ic_pause);
+                   // imgPausePlay.setImageResource(R.drawable.ic_pause);
                 }
                 break;
             case R.id.imgSkipNxt:

@@ -318,6 +318,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     public void playMedia() {
         if (!mediaPlayer.isPlaying()) {
             mediaPlayer.start();
+            HomeActivity.imgPausePlay.setImageResource(R.drawable.ic_pause);
         }
     }
 
@@ -329,6 +330,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         if (mediaPlayer == null) return;
         if (mediaPlayer.isPlaying()) {
             mediaPlayer.stop();
+            HomeActivity.imgPausePlay.setImageResource(R.drawable.ic_play);
         }
     }
 
@@ -339,6 +341,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         if (mediaPlayer.isPlaying()) {
             mediaPlayer.pause();
             resumePosition = mediaPlayer.getCurrentPosition();
+            HomeActivity.imgPausePlay.setImageResource(R.drawable.ic_play);
         }
     }
 
@@ -350,6 +353,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             mediaPlayer.seekTo(resumePosition);
             mediaPlayer.start();
 
+            HomeActivity.imgPausePlay.setImageResource(R.drawable.ic_pause);
             HomeActivity.changeSeekbar();
         }
     }
