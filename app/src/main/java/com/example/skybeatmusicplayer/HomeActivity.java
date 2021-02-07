@@ -43,12 +43,14 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
 
     //array list of audio files;
 
-    ArrayList<Audio> audioList;
+    public static ArrayList<Audio> audioList;
 
     //linked to StorageUtil
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.example.skybeatmusicplayer.PlayNewAudio";
     public static final String Broadcast_PAUSE_MUSIC = "com.example.skybeatmusicplayer.PauseMusic";
     public static final String Broadcast_PLAY_NEXT_MUSIC = "com.example.skybeatmusicplayer.PlayNextMusic";
+    public static final String Broadcast_RESUME_MUSIC = "com.example.skybeatmusicplayer.ResumeMusic";
+    public static final String Broadcast_PLAY_PREVIOUS_MUSIC = "com.example.skybeatmusicplayer.PlayPreviousMusic";
 
 
     RecyclerView recyclerView;
@@ -142,6 +144,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
         });
 
         register_playNextMusic();
+        register_playPreviousMusic();
 
         // playAudio(1);
 
@@ -230,6 +233,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
         }
 
         unregisterReceiver(playNextMusic);
+        unregisterReceiver(playPreviousMusic);
     }
 
     /**
@@ -449,6 +453,37 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
     private void register_playNextMusic(){
         IntentFilter filter = new IntentFilter(Broadcast_PLAY_NEXT_MUSIC);
         registerReceiver(playNextMusic, filter);
+    }
+
+
+    private BroadcastReceiver playPreviousMusic = new BroadcastReceiver()
+    {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            //play the previous Music
+            currentSong--;
+            if (currentSong == -1) {
+                playAudio(audioList.size() - 1);
+                currentSong = audioList.size() - 1;
+            } else {
+                playAudio(currentSong);
+            }
+            tvMusicTitle.setText(audioList.get(currentSong).getTitle());
+
+
+            if (audioList.get(currentSong).getArtist().equals("<unknown>")) {
+                tvMusicArtist.setText("Unknown Artist");
+            } else {
+                tvMusicArtist.setText(audioList.get(currentSong).getArtist());
+            }
+        }
+    };
+    //register the previous Music broadcast Receiver
+
+    private void register_playPreviousMusic(){
+        IntentFilter filter = new IntentFilter(Broadcast_PLAY_PREVIOUS_MUSIC);
+        registerReceiver(playPreviousMusic, filter);
     }
 }
 

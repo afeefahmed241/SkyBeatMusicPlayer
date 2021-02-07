@@ -1,5 +1,6 @@
 package com.example.skybeatmusicplayer;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -182,6 +183,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         unregisterReceiver(becomingNoisyReceiver);
         unregisterReceiver(playNewAudio);
         unregisterReceiver(pauseMusic);
+        unregisterReceiver(resumeMusic);
 
         //clear cached playlist
         new StorageUtil(getApplicationContext()).clearCachedAudioPlaylist();
@@ -319,6 +321,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         if (!mediaPlayer.isPlaying()) {
             mediaPlayer.start();
             HomeActivity.imgPausePlay.setImageResource(R.drawable.ic_pause);
+            showNotification("Pause");
         }
     }
 
@@ -331,6 +334,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         if (mediaPlayer.isPlaying()) {
             mediaPlayer.stop();
             HomeActivity.imgPausePlay.setImageResource(R.drawable.ic_play);
+            showNotification("Play");
         }
     }
 
@@ -342,6 +346,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             mediaPlayer.pause();
             resumePosition = mediaPlayer.getCurrentPosition();
             HomeActivity.imgPausePlay.setImageResource(R.drawable.ic_play);
+            showNotification("Play");
         }
     }
 
@@ -355,6 +360,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
             HomeActivity.imgPausePlay.setImageResource(R.drawable.ic_pause);
             HomeActivity.changeSeekbar();
+            showNotification("Pause");
         }
     }
 
@@ -492,6 +498,23 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         registerReceiver(pauseMusic, filter);
     }
 
+
+
+    private BroadcastReceiver resumeMusic = new BroadcastReceiver()
+    {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            //pause the Music
+            resumeMedia();
+        }
+    };
+    //register the resume broadcast Receiver
+
+    private void register_resumeMusic(){
+        IntentFilter filter = new IntentFilter(HomeActivity.Broadcast_RESUME_MUSIC);
+        registerReceiver(resumeMusic, filter);
+    }
     /**
      * Registering All the broadcast receivers
      */
@@ -512,10 +535,50 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
         //pausing music
         register_pauseMusic();
+        register_resumeMusic();
     }
 
 
    // notification part have to be done in this class
+
+    public void showNotification(String playPause)
+    {
+        Intent playPauseIntent;
+        if(playPause.equals("Play"))
+        {
+            playPauseIntent = new Intent(HomeActivity.Broadcast_RESUME_MUSIC);
+        }
+        else
+        {
+            playPauseIntent = new Intent(HomeActivity.Broadcast_PAUSE_MUSIC);
+        }
+        PendingIntent pauseIntent = PendingIntent.getBroadcast(this,0,playPauseIntent,PendingIntent.FLAG_UPDATE_CURRENT);
+
+
+        Intent nextMusicIntent = new Intent(HomeActivity.Broadcast_PLAY_NEXT_MUSIC);
+        PendingIntent nextIntent = PendingIntent.getBroadcast(this,0,nextMusicIntent,PendingIntent.FLAG_UPDATE_CURRENT);
+
+        Intent nextPreviousIntent = new Intent(HomeActivity.Broadcast_PLAY_PREVIOUS_MUSIC);
+        PendingIntent prevIntent = PendingIntent.getBroadcast(this,0,nextPreviousIntent,PendingIntent.FLAG_UPDATE_CURRENT);
+
+
+
+        Notification notification = new NotificationCompat.Builder(this, "Channel_2")
+                // Show controls on lock screen even when user hides sensitive content.
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setSmallIcon(R.drawable.ic_music)
+                // Add media control buttons that invoke intents in your media service
+                .addAction(R.drawable.ic_skip_previous, "Previous", prevIntent) // #0
+                .addAction(R.drawable.ic_pause, playPause, pauseIntent)  // #1
+                .addAction(R.drawable.ic_skip_next, "Next",nextIntent)     // #2
+                // Apply the media style template
+                .setContentTitle(HomeActivity.audioList.get(audioIndex).getTitle())
+                .setOnlyAlertOnce(true)
+                .build();
+
+        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        notificationManager.notify(0,notification);
+    }
 
 
 
