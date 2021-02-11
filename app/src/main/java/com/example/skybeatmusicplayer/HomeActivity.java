@@ -1,5 +1,6 @@
 package com.example.skybeatmusicplayer;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -9,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -157,12 +159,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
 
 
         if (player.mediaPlayer.isPlaying()) {
-            runnable = new Runnable() {
-                @Override
-                public void run() {
-                    changeSeekbar();
-                }
-            };
+            runnable = HomeActivity::changeSeekbar;
             handler.postDelayed(runnable, 50);
         }
 
@@ -170,7 +167,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
 
 
     //Binding this Client to the AudioPlayer Service
-    private ServiceConnection serviceConnection = new ServiceConnection() {
+    private final ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
@@ -280,7 +277,6 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
                 requestPermissions(new String[]{
                                 Manifest.permission.READ_EXTERNAL_STORAGE},
                         REQUEST_CODE_ASK_PERMISSIONS);
-                return;
             }
             else
             {
@@ -303,27 +299,25 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_CODE_ASK_PERMISSIONS:
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    loadAudio();
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == REQUEST_CODE_ASK_PERMISSIONS) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                loadAudio();
 
-                    //setting up the adapter
-                    myAdapter = new SongAdapter(this, audioList);
-                    recyclerView.setAdapter(myAdapter);
+                //setting up the adapter
+                myAdapter = new SongAdapter(this, audioList);
+                recyclerView.setAdapter(myAdapter);
 
-                    myAdapter.notifyDataSetChanged();
+                myAdapter.notifyDataSetChanged();
 
-                } else {
-                    // Permission Denied
-                    Toast.makeText(this, "Permission Denial", Toast.LENGTH_SHORT)
-                            .show();
-                    CheckUserPermsions();
-                }
-                break;
-            default:
-                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+            } else {
+                // Permission Denied
+                Toast.makeText(this, "Permission Denial", Toast.LENGTH_SHORT)
+                        .show();
+                CheckUserPermsions();
+            }
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
     }
 
@@ -373,6 +367,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
 
     }
 
+    @SuppressLint("NonConstantResourceId")
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
@@ -425,7 +420,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
         }
     }
 
-    private BroadcastReceiver playNextMusic = new BroadcastReceiver()
+    private final BroadcastReceiver playNextMusic = new BroadcastReceiver()
     {
 
         @Override
@@ -456,7 +451,7 @@ public class HomeActivity extends AppCompatActivity implements SongAdapter.ItemC
     }
 
 
-    private BroadcastReceiver playPreviousMusic = new BroadcastReceiver()
+    private final BroadcastReceiver playPreviousMusic = new BroadcastReceiver()
     {
 
         @Override
