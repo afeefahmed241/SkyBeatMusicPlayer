@@ -8,7 +8,7 @@ This is a java based android app, which uses android's service application compo
 # Features
 <ul>
         <li>Basic Playlist with a Scrollview</li>
-        <li>Playing Different Music (Play, Pause and Resume)</li>
+        <li>Playing Different Music from the phone's Internal Storage (Play, Pause and Resume)</li>
         <li>Playing Music in the background (While using other App)</li>
         <li>Pause the Music for specific actions (such as: sudden calls, removal of headphone etc.)</li>
         <li>Controlling the servies from the Notification Bar</li>
