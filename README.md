@@ -5,7 +5,7 @@ Works on Android version 7,8,9 or below(Tested).
 
 This is a java based android app, which uses android's service application component that can perform long run operations(music) in the background.
 
-# Features
+## Features
 <ul>
         <li>Basic Playlist with a Scrollview</li>
         <li>Playing Different Music from the phone's Internal Storage (Play, Pause and Resume)</li>
@@ -14,7 +14,7 @@ This is a java based android app, which uses android's service application compo
         <li>Controlling the servies from the Notification Bar</li>
 </ul>
 
-# Screeshots
+## Screeshots
 
 ![1](https://user-images.githubusercontent.com/75577472/207679692-0251f1b7-479f-41c1-b559-0323c8cc4cb5.png)
 
